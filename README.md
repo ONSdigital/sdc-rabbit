@@ -1,4 +1,4 @@
-# sdc-rabbit
+# sdc-rabbit-python
 
 
 
@@ -6,7 +6,7 @@
 
 Common code for SDC Pika-based services that interact with RabbitMQ.
 
-## sdc-rabbit
+## sdc-rabbit-python
 
 A common source code library for SDC apps that use Pika to interact with RabbitMQ.
 Apps wishing to use this service should use pip's VCS aware install method::
