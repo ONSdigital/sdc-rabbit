@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<error xmlns="http://ns.ons.gov.uk/namespaces/resources/error">
+    <error_id>61e262da-082a-4ce0-9c0c-15ea2f68a909</error_id>
+    <message>Some other error causing a 404</message>
+</error>
