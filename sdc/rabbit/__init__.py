@@ -1,11 +1,9 @@
-from .async_consumer import AsyncConsumer
-from .consumer import Consumer
-from .publisher import QueuePublisher
+from .async_consumer import AsyncConsumer  # noqa
+from .consumer import MessageConsumer
+from .publisher import QueuePublisher  # noqa
 
 all = [
-    AsyncConsumer,
-    Consumer,
-    QueuePublisher,
+    MessageConsumer,
 ]
 
 __version__ = '0.1.0'
