@@ -70,7 +70,8 @@ setup(
         "dev": [
             "responses==0.5.1",
             "pep8>=1.6.2",
-            "flake8>=2.6.0"
+            "flake8>=2.6.0",
+            "structlog==17.2.0"
         ],
         "docbuild": [
             "sphinx-argparse>=0.1.17",
