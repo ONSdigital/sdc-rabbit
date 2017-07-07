@@ -3,11 +3,8 @@ import logging
 import unittest
 from unittest.mock import patch
 
-from structlog import wrap_logger
-
-from sdx.common.exceptions import BadMessageError, DecryptError, RetryableError
-from sdx.common.logger_config import logger_initial_config
-from sdx.common.queues import Consumer, ResponseProcessor
+from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
+from sdc.rabbit import MessageConsumer
 
 
 class DotDict(dict):
@@ -16,10 +13,7 @@ class DotDict(dict):
 
 
 class TestConsumer(unittest.TestCase):
-    logger_initial_config(service_name=__name__,
-                          log_level='DEBUG')
-
-    logger = wrap_logger(logging.getLogger(__name__))
+    logger = logging.getLogger(__name__)
 
     def setUp(self):
         self.response_processor = ResponseProcessor(self.logger,
@@ -27,14 +21,14 @@ class TestConsumer(unittest.TestCase):
                                                     '/',
                                                     'test',
                                                     'test')
-        self.consumer = Consumer('/',
-                                 'test',
-                                 'test',
-                                 'quarantine',
-                                 ['http://test/test'],
-                                 self.logger,
-                                 self.response_processor,
-                                 True)
+        self.consumer = MessageConsumer('/',
+                                        'test',
+                                        'test',
+                                        'quarantine',
+                                        ['http://test/test'],
+                                        self.logger,
+                                        self.response_processor,
+                                        True)
 
         self.props = DotDict({'headers': {'tx_id': 'test',
                                           'x-delivery-count': 0}})
@@ -75,7 +69,7 @@ class TestConsumer(unittest.TestCase):
         msg = "ERROR:common.queues.test.test_consumer:event='No x-delivery-count in header'"
         self.assertEqual(cm.output[0], msg)
 
-    @patch.object(Consumer, 'reject_message')
+    @patch.object(MessageConsumer, 'reject_message')
     def test_on_message_no_tx_id(self, mock_attribute):
         with self.assertLogs(logger=__name__, level='ERROR') as cm:
             result = self.consumer.on_message(self.basic_deliver,
@@ -86,7 +80,7 @@ class TestConsumer(unittest.TestCase):
         msg = "'Bad message properties - no tx_id'"
         self.assertIn(msg, cm.output[1])
 
-    @patch.object(Consumer, 'reject_message')
+    @patch.object(MessageConsumer, 'reject_message')
     def test_on_message_no_x_delivery_count(self, mock_attribute):
         with self.assertLogs(logger=__name__, level='ERROR') as cm:
             result = self.consumer.on_message(self.basic_deliver,
@@ -98,7 +92,7 @@ class TestConsumer(unittest.TestCase):
         self.assertIn(msg, cm.output[1])
 
     @patch.object(ResponseProcessor, 'process', side_effect=RetryableError)
-    @patch.object(Consumer, 'nack_message')
+    @patch.object(MessageConsumer, 'nack_message')
     def test_on_message_retryable_error(self, mock_processor, mock_consumer):
         with self.assertLogs(logger=__name__, level='ERROR') as cm:
             r = self.consumer.on_message(self.basic_deliver,
@@ -110,7 +104,7 @@ class TestConsumer(unittest.TestCase):
         self.assertIn(msg, cm.output[0])
 
     @patch.object(ResponseProcessor, 'process', side_effect=DecryptError)
-    @patch.object(Consumer, 'reject_message')
+    @patch.object(MessageConsumer, 'reject_message')
     def test_on_message_decrypt_error(self, mock_processor, mock_consumer):
         with self.assertLogs(logger=__name__, level='ERROR') as cm:
             r = self.consumer.on_message(self.basic_deliver,
@@ -122,7 +116,7 @@ class TestConsumer(unittest.TestCase):
         self.assertNotEqual(msg, cm.output[0])
 
     @patch.object(ResponseProcessor, 'process', side_effect=BadMessageError)
-    @patch.object(Consumer, 'reject_message')
+    @patch.object(MessageConsumer, 'reject_message')
     def test_on_message_badmessage_error(self, mock_processor, mock_consumer):
         with self.assertLogs(logger=__name__, level='ERROR') as cm:
             r = self.consumer.on_message(self.basic_deliver,

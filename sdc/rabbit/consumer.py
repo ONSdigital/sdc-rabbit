@@ -63,7 +63,7 @@ class MessageConsumer():
         """Create a new instance of the MessageConsumer class
 
         :param consumer: Object of type sdc.rabbit.AsyncConsumer
-        :param response_processer:
+        :param response_processer: Custom response processor object
 
         :returns: Object of type Consumer
         :rtype: Consumer
@@ -71,6 +71,11 @@ class MessageConsumer():
         """
         self._consumer = consumer
         self._response_processor = response_processor
+
+        expected_method = getattr(self._response_processor, "process", None)
+        if not callable(expected_method):
+            msg = 'Object {} does not have a "process" method'
+            raise AttributeError(msg.format(response_processor))
         self._quarantine_publisher = QueuePublisher(self.consumer.rabbit_url,
                                                     self.consumer.rabbit_quarantine_queue)
 

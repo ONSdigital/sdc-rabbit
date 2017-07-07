@@ -1,4 +1,9 @@
+import logging
+
+from structlog import wrap_logger
 import pika
+
+LOGGER = wrap_logger(logging.getLogger('__name__'))
 
 
 class QueuePublisher(object):
@@ -8,7 +13,7 @@ class QueuePublisher(object):
     """
     _durable_queue = True
 
-    def __init__(self, logger, urls, queue, **kwargs):
+    def __init__(self, urls, queue, **kwargs):
         """Create a new instance of the QueuePublisher class
 
         :param logger: A reference to a logging.Logger instance
@@ -21,7 +26,6 @@ class QueuePublisher(object):
         :rtype: QueuePublisher
 
         """
-        self._logger = logger
         self._urls = urls
         self._queue = queue
         self._arguments = kwargs
@@ -36,7 +40,7 @@ class QueuePublisher(object):
         :rtype: bool
 
         """
-        self._logger.debug("Connecting to queue")
+        LOGGER.debug("Connecting to queue")
         for url in self._urls:
             try:
                 self._connection = pika.BlockingConnection(pika.URLParameters(url))
@@ -44,12 +48,12 @@ class QueuePublisher(object):
                 self._channel.queue_declare(queue=self._queue,
                                             durable=self._durable_queue,
                                             arguments=self._arguments)
-                self._logger.debug("Connected to queue")
+                LOGGER.debug("Connected to queue")
                 return True
 
             except pika.exceptions.AMQPConnectionError as e:
-                self._logger.error("Unable to connect to queue",
-                                   exception=repr(e))
+                LOGGER.error("Unable to connect to queue",
+                             exception=repr(e))
                 continue
 
         return False
@@ -63,10 +67,10 @@ class QueuePublisher(object):
         """
         try:
             self._connection.close()
-            self._logger.debug("Disconnected from queue")
+            LOGGER.debug("Disconnected from queue")
 
         except Exception as e:
-            self._logger.error("Unable to close connection", exception=repr(e))
+            LOGGER.error("Unable to close connection", exception=repr(e))
 
     def publish_message(self, message, content_type=None, headers=None):
         """
@@ -80,7 +84,7 @@ class QueuePublisher(object):
         :rtype: bool
 
         """
-        self._logger.debug("Sending message")
+        LOGGER.debug("Sending message")
         if not self._connect():
             return False
 
@@ -93,10 +97,10 @@ class QueuePublisher(object):
                                             delivery_mode=2
                                         ),
                                         body=message)
-            self._logger.debug("Published message")
+            LOGGER.debug("Published message")
 
         except Exception as e:
-            self._logger.error("Unable to publish message", exception=repr(e))
+            LOGGER.error("Unable to publish message", exception=repr(e))
             return False
         finally:
             self._disconnect()
