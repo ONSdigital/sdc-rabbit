@@ -19,7 +19,7 @@ For production deployments a tag should be referenced, rather than master.
 
 ### Basic Use
 
-Assuming you are running a virtual environment:
+Assuming you are executing from inside an activated virtual environment:
 
 ###### Install requirements:
 
