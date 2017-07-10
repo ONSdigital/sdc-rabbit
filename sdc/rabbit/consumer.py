@@ -45,10 +45,10 @@ class MessageConsumer():
         message properties. Will raise KeyError if tx_id is missing from message
         headers.
 
-        :param properties: Message properties
+        : param properties: Message properties
 
-        :returns: tx_id of survey response
-        :rtype: str
+        : returns: tx_id of survey response
+        : rtype: str
         """
         tx = properties.headers['tx_id']
         LOGGER.info("Retrieved tx_id from message properties: tx_id={}".format(tx))
@@ -57,9 +57,9 @@ class MessageConsumer():
     def __init__(self, consumer, process):
         """Create a new instance of the MessageConsumer class
 
-        :param consumer: Object of type sdc.rabbit.AsyncConsumer
-        :param process: Function or method to use for processsing message. Will
-            be passed the body of the message as a string decoded using UTF-8.
+        : param consumer: Object of type sdc.rabbit.AsyncConsumer
+        : param process: Function or method to use for processsing message. Will
+            be passed the body of the message as a string decoded using UTF - 8.
             Should raise sdc.rabbit.DecryptError, sdc.rabbit.BadMessageError or
             sdc.rabbit.RetryableError on failure, depending on the failure mode.
 

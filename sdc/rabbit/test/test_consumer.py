@@ -4,9 +4,8 @@ import unittest
 
 from sdc.rabbit import AsyncConsumer, MessageConsumer
 
-
-def raise_exc(exc):
-    raise exc
+from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
+from sdc.rabbit import MessageConsumer
 
 
 class DotDict(dict):
