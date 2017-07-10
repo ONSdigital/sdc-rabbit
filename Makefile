@@ -1,5 +1,5 @@
 
-.PHONY: depinstall clean doc sdist test
+.PHONY: depinstall clean sdist test
 
 clean:
 	rm -rf sdc/rabbit/doc/html
@@ -8,14 +8,11 @@ clean:
 depinstall:
 	pip3 install -r requirements.txt
 
-doc: depinstall
-	pip install .[docbuild]
-	sphinx-build sdc/rabbit/doc sdc/rabbit/doc/html
-
-sdist: doc
+sdist:
 	python setup.py sdist
 
 test: depinstall
+	pip3 install -r test_requirements.txt
 	pip3 install .[dev]
 	flake8 .
 	python -m unittest discover sdc

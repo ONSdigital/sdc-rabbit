@@ -48,18 +48,6 @@ setup(
     package_data={
         "sdc.rabbit": [
             "requirements.txt",
-            "doc/*.rst",
-            "doc/_templates/*.css",
-            "doc/html/*.html",
-            "doc/html/*.js",
-            "doc/html/_sources/*",
-            "doc/html/_static/css/*",
-            "doc/html/_static/font/*",
-            "doc/html/_static/js/*",
-            "doc/html/_static/*.css",
-            "doc/html/_static/*.gif",
-            "doc/html/_static/*.js",
-            "doc/html/_static/*.png",
         ],
         "sdc.rabbit.test": [
             "*.xml",
@@ -71,12 +59,7 @@ setup(
             "responses==0.5.1",
             "pep8>=1.6.2",
             "flake8>=2.6.0",
-            "structlog==17.2.0"
-        ],
-        "docbuild": [
-            "sphinx-argparse>=0.1.17",
-            "sphinxcontrib-seqdiag>=0.8.5",
-            "sphinx_rtd_theme>=0.2.4",
+            "structlog==17.2.0",
         ],
     },
     tests_require=[

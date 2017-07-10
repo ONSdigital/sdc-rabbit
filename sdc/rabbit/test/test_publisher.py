@@ -1,94 +1,65 @@
 import json
 import logging
 import unittest
-from unittest.mock import patch
 
-from pika import BlockingConnection
-from pika.exceptions import AMQPConnectionError
-from pika.adapters.blocking_connection import BlockingChannel
+from sdx.common.log_levels import set_level
 
 from sdc.rabbit import QueuePublisher
 from sdc.rabbit.test.test_data import test_data
+
+set_level('pika', 'CRITICAL')
 
 
 class TestPublisher(unittest.TestCase):
     logger = logging.getLogger(__name__)
 
-    publisher = QueuePublisher(['http://test/test', 'http://test/test'],
+    publisher = QueuePublisher(['amqp://guest:guest@0.0.0.0:5672',
+                                'amqp://guest:guest@0.0.0.0:5672'],
                                'test')
 
+    bad_publisher = QueuePublisher(['amqp://guest:guest@0.0.0.0:672',
+                                    'amqp://guest:guest@0.0.0.0:672'],
+                                   'test')
+
     def test_init(self):
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
-        self.assertIs(p._logger, self.logger)
-        self.assertEqual(p._urls, ['http://test/test', 'http://test/test'])
-        self.assertEqual(p._queue, 'test')
-        self.assertEqual(p._arguments, {})
-        self.assertEqual(p._connection, None)
-        self.assertEqual(p._channel, None)
+        this_publisher = QueuePublisher(['amqp://guest:guest@0.0.0.0:5672',
+                                         'amqp://guest:guest@0.0.0.0:5672'],
+                                        'test')
+        self.assertEqual(this_publisher._urls, ['amqp://guest:guest@0.0.0.0:5672',
+                                                'amqp://guest:guest@0.0.0.0:5672'])
+        self.assertEqual(this_publisher._queue, 'test')
+        self.assertEqual(this_publisher._arguments, {})
+        self.assertEqual(this_publisher._connection, None)
+        self.assertEqual(this_publisher._channel, None)
 
-    @patch.object(BlockingConnection,
-                  '__init__',
-                  side_effect=AMQPConnectionError(1))
-    def test_connect_amqp_connection_error(self, mock_class):
+    def test_connect_amqp_connection_error(self):
 
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
-
-        result = p._connect()
+        result = self.bad_publisher._connect()
         self.assertEqual(result, False)
 
-    @patch.object(BlockingConnection, '__init__', return_value=None)
-    @patch.object(BlockingConnection, 'channel')
-    @patch.object(BlockingChannel, 'queue_declare')
-    def test_connect_amqpok(self,
-                            mock_blocking_connection_init,
-                            mock_channel,
-                            mock_queue):
+    def test_connect_amqpok(self):
 
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
-
-        result = p._connect()
+        result = self.publisher._connect()
         self.assertEqual(result, True)
 
-    @patch.object(BlockingConnection, 'close')
-    def test_disconnect_ok(self, mock_blocking_connection):
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
+    def test_disconnect_ok(self):
+        self.publisher._connect()
 
-        p._connection = mock_blocking_connection
+        with self.assertLogs(level='DEBUG') as cm:
+            self.publisher._disconnect()
 
-        with self.assertLogs(logger=__name__, level='DEBUG') as cm:
-            p._disconnect()
+        msg = 'Disconnected from queue'
+        self.assertIn(msg, cm[1][-1])
 
-        msg = "DEBUG:rabbit.test.test_publisher:event='Disconnected from queue'"
-        self.assertEqual(cm.output, [msg])
+    def test_disconnect_error(self):
 
-    @patch.object(BlockingConnection, '__init__', return_value=None)
-    @patch.object(BlockingConnection, 'channel')
-    @patch.object(BlockingChannel, 'queue_declare')
-    @patch.object(BlockingConnection, 'close', side_effect=Exception)
-    def test_disconnect_error(self,
-                              mock_blocking_connection,
-                              mock_channel,
-                              mock_queue,
-                              mock_close):
+        self.publisher._disconnect()
+        with self.assertLogs(level='ERROR') as cm:
+            self.publisher._disconnect()
 
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
-        p._connect()
-
-        with self.assertLogs(logger=__name__, level='ERROR') as cm:
-            p._disconnect()
-
-        msg = "ERROR:common.queues.test.test_publisher:exception='Exception()'" + \
-              " event='Unable to close connection'"
-        self.assertEqual(cm.output, [msg])
+        msg = 'Unable to close connection'
+        self.assertIn(msg, cm.output[0])
 
     def test_publish_message_no_connection(self):
-        p = QueuePublisher(['http://test/test', 'http://test/test'],
-                           'test')
-
-        result = p.publish_message(json.loads(test_data['valid']))
+        result = self.bad_publisher.publish_message(json.loads(test_data['valid']))
         self.assertEqual(False, result)

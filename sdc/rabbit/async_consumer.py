@@ -44,6 +44,7 @@ class AsyncConsumer(object):
         self._durable_queue = durable_queue
         self._queue = rabbit_queue
         self._rabbit_urls = rabbit_urls
+        self._rabbit_quarantine_queue = 'async_consumer_quarantine'
 
         self._connection = None
         self._channel = None
@@ -175,7 +176,7 @@ class AsyncConsumer(object):
         LOGGER.info('Channel opened', channel=channel)
         self._channel = channel
         self.add_on_channel_close_callback()
-        self.setup_exchange(self.EXCHANGE)
+        self.setup_exchange(self._exchange)
 
     def setup_exchange(self, exchange_name):
         """Setup the exchange on RabbitMQ by invoking the Exchange.Declare RPC
@@ -188,7 +189,7 @@ class AsyncConsumer(object):
         LOGGER.info('Declaring exchange', name=exchange_name)
         self._channel.exchange_declare(self.on_exchange_declareok,
                                        exchange_name,
-                                       self.EXCHANGE_TYPE)
+                                       self._exchange_type)
 
     def on_exchange_declareok(self, unused_frame):
         """Invoked by pika when RabbitMQ has finished the Exchange.Declare RPC
@@ -198,7 +199,7 @@ class AsyncConsumer(object):
 
         """
         LOGGER.info('Exchange declared')
-        self.setup_queue(self.QUEUE)
+        self.setup_queue(self._queue)
 
     def setup_queue(self, queue_name):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
@@ -223,8 +224,8 @@ class AsyncConsumer(object):
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
 
         """
-        LOGGER.info('Binding to rabbit', exchange=self.EXCHANGE, queue=self.QUEUE)
-        self._channel.queue_bind(self.on_bindok, self.QUEUE, self.EXCHANGE)
+        LOGGER.info('Binding to rabbit', exchange=self._exchange, queue=self._queue)
+        self._channel.queue_bind(self.on_bindok, self._queue, self._exchange)
 
     def add_on_cancel_callback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
@@ -331,7 +332,7 @@ class AsyncConsumer(object):
         self.add_on_cancel_callback()
         self._channel.basic_qos(prefetch_count=1)
         self._consumer_tag = self._channel.basic_consume(self.on_message,
-                                                         self.QUEUE)
+                                                         self._queue)
 
     def on_bindok(self, unused_frame):
         """Invoked by pika when the Queue.Bind method has completed. At this
