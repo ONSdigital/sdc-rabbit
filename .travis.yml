@@ -1,0 +1,15 @@
+language: python
+python:
+  - "3.6"
+  - "3.5"
+  - "3.4"
+sudo: required
+services:
+  - rabbitmq
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y poppler-utils
+install: make depinstall
+script: make test
+after_success:
+  - make sdist
