@@ -3,6 +3,7 @@ import logging
 from structlog import wrap_logger
 
 from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
+from sdc.rabbit.exceptions import PublishMessageError
 
 logger = wrap_logger(logging.getLogger('__name__'))
 
@@ -121,13 +122,20 @@ class MessageConsumer():
 
         except DecryptError as e:
             # Throw it into the quarantine queue to be dealt with
-            self._quarantine_publisher.publish_message(body)
-            self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
-            logger.error("Bad decrypt",
-                         action="quarantined",
-                         exception=str(e),
-                         tx_id=tx_id,
-                         delivery_count=delivery_count)
+            try:
+                self._quarantine_publisher.publish_message(body)
+                self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
+                logger.error("Bad decrypt",
+                             action="quarantined",
+                             exception=str(e),
+                             tx_id=tx_id,
+                             delivery_count=delivery_count)
+            except PublishMessageError as e:
+                logger.error("Unable to publish message to quarantine queue." +
+                             "Rejecting message and requeing.")
+                self._consumer.reject_message(basic_deliver.delivery_tag,
+                                              requeue=True,
+                                              tx_id=tx_id)
 
         except BadMessageError as e:
             # If it's a bad message then we have to reject it

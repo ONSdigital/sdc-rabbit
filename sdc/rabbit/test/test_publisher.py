@@ -2,6 +2,7 @@ import json
 import logging
 import unittest
 
+from pika.exceptions import AMQPConnectionError
 from sdx.common.log_levels import set_level
 
 from sdc.rabbit import QueuePublisher
@@ -33,9 +34,9 @@ class TestPublisher(unittest.TestCase):
         self.assertEqual(this_publisher._channel, None)
 
     def test_connect_amqp_connection_error(self):
-
-        result = self.bad_publisher._connect()
-        self.assertEqual(result, False)
+        with self.assertRaises(AMQPConnectionError):
+            result = self.bad_publisher._connect()
+            self.assertEqual(None, result)
 
     def test_connect_amqpok(self):
 

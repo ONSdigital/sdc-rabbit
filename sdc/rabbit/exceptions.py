@@ -21,3 +21,10 @@ class RetryableError(Exception):
 
     """
     pass
+
+
+class PublishMessageError(Exception):
+    """An attempt to publish a message failed.
+
+    """
+    pass

@@ -99,8 +99,9 @@ class QueuePublisher(object):
                                         body=message)
             logger.debug("Published message")
 
-        except pika.exceptions.ChannelClosed:
-            self._connect()
+        except pika.exceptions.ChannelClosed as e:
+            logger.error("No channel open", exception=repr(e))
+            return False
         except Exception as e:
             logger.error("Unable to publish message", exception=repr(e))
             return False

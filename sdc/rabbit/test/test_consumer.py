@@ -2,7 +2,7 @@ import json
 import logging
 import unittest
 
-from sdc.rabbit import AsyncConsumer, MessageConsumer
+from sdc.rabbit import AsyncConsumer, MessageConsumer, QueuePublisher
 
 
 class DotDict(dict):
@@ -14,9 +14,16 @@ class TestConsumer(unittest.TestCase):
     logger = logging.getLogger(__name__)
 
     def setUp(self):
+        amqp_url = 'amqp://guest:guest@0.0.0.0:5672'
         self.consumer = AsyncConsumer(True, '/', 'topic', 'test',
-                                      ['amqp://guest:guest@0.0.0.0:5672'])
-        self.message_consumer = MessageConsumer(self.consumer, lambda x: True)
+                                      [amqp_url])
+
+        self.quarantine_publisher = QueuePublisher([amqp_url],
+                                                   'test_quarantine')
+
+        self.message_consumer = MessageConsumer(self.consumer,
+                                                self.quarantine_publisher,
+                                                lambda x: True)
 
         self.props = DotDict({'headers': {'tx_id': 'test',
                                           'x-delivery-count': 0}})
@@ -34,7 +41,7 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(self.message_consumer._consumer._durable_queue, True)
 
         self.assertEqual(self.message_consumer._quarantine_publisher._queue,
-                         'async_consumer_quarantine')
+                         'test_quarantine')
         self.assertEqual(self.message_consumer._quarantine_publisher._urls,
                          ['amqp://guest:guest@0.0.0.0:5672'])
 

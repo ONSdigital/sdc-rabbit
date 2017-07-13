@@ -26,7 +26,6 @@ class AsyncConsumer:
                  exchange,
                  exchange_type,
                  rabbit_queue,
-                 quarantine_queue,
                  rabbit_urls):
         """Create a new instance of the AsyncConsumer class.
 
@@ -45,7 +44,6 @@ class AsyncConsumer:
         self._durable_queue = durable_queue
         self._queue = rabbit_queue
         self._rabbit_urls = rabbit_urls
-        self._rabbit_quarantine_queue = quarantine_queue
 
         self._connection = None
         self._channel = None
@@ -268,14 +266,14 @@ class AsyncConsumer:
         logger.info('Nacking message', delivery_tag=delivery_tag, **kwargs)
         self._channel.basic_nack(delivery_tag)
 
-    def reject_message(self, delivery_tag, **kwargs):
+    def reject_message(self, delivery_tag, requeue=False, **kwargs):
         """Reject the message delivery from RabbitMQ by sending a
         Basic.Reject RPC method for the delivery tag.
         :param int delivery_tag: The delivery tag from the Basic.Deliver frame
 
         """
         logger.info('Rejecting message', delivery_tag=delivery_tag, **kwargs)
-        self._channel.basic_reject(delivery_tag, requeue=False)
+        self._channel.basic_reject(delivery_tag, requeue=requeue)
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
