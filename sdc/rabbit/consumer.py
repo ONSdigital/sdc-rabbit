@@ -2,10 +2,10 @@ import logging
 
 from structlog import wrap_logger
 
-from .exceptions import BadMessageError, DecryptError, RetryableError
-from .publisher import QueuePublisher
+from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
+from sdc.rabbit.publisher import QueuePublisher
 
-LOGGER = wrap_logger(logging.getLogger('__name__'))
+logger = wrap_logger(logging.getLogger('__name__'))
 
 
 class MessageConsumer():
@@ -51,7 +51,7 @@ class MessageConsumer():
         : rtype: str
         """
         tx = properties.headers['tx_id']
-        LOGGER.info("Retrieved tx_id from message properties: tx_id={}".format(tx))
+        logger.info("Retrieved tx_id from message properties: tx_id={}".format(tx))
         return tx
 
     def __init__(self, consumer, process):
@@ -96,13 +96,13 @@ class MessageConsumer():
         except KeyError as e:
             self._consumer.reject_message(basic_deliver.delivery_tag)
             msg = 'Bad message properties - no delivery count'
-            LOGGER.error(msg, action="quarantined", exception=str(e))
+            logger.error(msg, action="quarantined", exception=str(e))
             return None
 
         try:
             tx_id = self.tx_id(properties)
 
-            LOGGER.info('Received message',
+            logger.info('Received message',
                         queue=self._consumer._queue,
                         delivery_tag=basic_deliver.delivery_tag,
                         delivery_count=delivery_count,
@@ -111,7 +111,7 @@ class MessageConsumer():
 
         except KeyError as e:
             self._consumer.reject_message(basic_deliver.delivery_tag)
-            LOGGER.error("Bad message properties - no tx_id",
+            logger.error("Bad message properties - no tx_id",
                          action="quarantined",
                          exception=str(e),
                          delivery_count=delivery_count)
@@ -125,7 +125,7 @@ class MessageConsumer():
         except DecryptError as e:
             # Throw it into the quarantine queue to be dealt with
             self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
-            LOGGER.error("Bad decrypt",
+            logger.error("Bad decrypt",
                          action="quarantined",
                          exception=str(e),
                          tx_id=tx_id,
@@ -134,7 +134,7 @@ class MessageConsumer():
         except BadMessageError as e:
             # If it's a bad message then we have to reject it
             self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
-            LOGGER.error("Bad message",
+            logger.error("Bad message",
                          action="rejected",
                          exception=str(e),
                          tx_id=tx_id,
@@ -142,7 +142,7 @@ class MessageConsumer():
 
         except RetryableError as e:
             self._consumer.nack_message(basic_deliver.delivery_tag, tx_id=tx_id)
-            LOGGER.error("Failed to process",
+            logger.error("Failed to process",
                          action="nack",
                          exception=str(e),
                          tx_id=tx_id,

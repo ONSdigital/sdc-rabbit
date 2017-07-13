@@ -1,6 +1,6 @@
-from .async_consumer import AsyncConsumer  # noqa
-from .consumer import MessageConsumer
-from .publisher import QueuePublisher  # noqa
+from sdc.rabbit.async_consumer import AsyncConsumer  # noqa
+from sdc.rabbit.consumer import MessageConsumer
+from sdc.rabbit.publisher import QueuePublisher  # noqa
 
 all = [
     MessageConsumer,

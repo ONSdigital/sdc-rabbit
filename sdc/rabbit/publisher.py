@@ -3,7 +3,7 @@ import logging
 from structlog import wrap_logger
 import pika
 
-LOGGER = wrap_logger(logging.getLogger('__name__'))
+logger = wrap_logger(logging.getLogger('__name__'))
 
 
 class QueuePublisher(object):
@@ -40,7 +40,7 @@ class QueuePublisher(object):
         :rtype: bool
 
         """
-        LOGGER.debug("Connecting to queue")
+        logger.debug("Connecting to queue")
         for url in self._urls:
             try:
                 self._connection = pika.BlockingConnection(pika.URLParameters(url))
@@ -48,11 +48,11 @@ class QueuePublisher(object):
                 self._channel.queue_declare(queue=self._queue,
                                             durable=self._durable_queue,
                                             arguments=self._arguments)
-                LOGGER.debug("Connected to queue")
+                logger.debug("Connected to queue")
                 return True
 
             except pika.exceptions.AMQPConnectionError as e:
-                LOGGER.error("Unable to connect to queue",
+                logger.error("Unable to connect to queue",
                              exception=repr(e))
                 continue
 
@@ -67,10 +67,10 @@ class QueuePublisher(object):
         """
         try:
             self._connection.close()
-            LOGGER.debug("Disconnected from queue")
+            logger.debug("Disconnected from queue")
 
         except Exception as e:
-            LOGGER.error("Unable to close connection", exception=repr(e))
+            logger.error("Unable to close connection", exception=repr(e))
 
     def publish_message(self, message, content_type=None, headers=None):
         """
@@ -84,7 +84,7 @@ class QueuePublisher(object):
         :rtype: bool
 
         """
-        LOGGER.debug("Sending message")
+        logger.debug("Sending message")
         if not self._connect():
             return False
 
@@ -97,10 +97,10 @@ class QueuePublisher(object):
                                             delivery_mode=2
                                         ),
                                         body=message)
-            LOGGER.debug("Published message")
+            logger.debug("Published message")
 
         except Exception as e:
-            LOGGER.error("Unable to publish message", exception=repr(e))
+            logger.error("Unable to publish message", exception=repr(e))
             return False
         finally:
             self._disconnect()
