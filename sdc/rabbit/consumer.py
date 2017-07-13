@@ -93,7 +93,7 @@ class MessageConsumer():
         except KeyError as e:
             self._consumer.reject_message(basic_deliver.delivery_tag)
             msg = 'Bad message properties - no delivery count'
-            logger.error(msg, action="quarantined", exception=str(e))
+            logger.error(msg, action="rejected", exception=str(e))
             return None
 
         try:
@@ -109,7 +109,7 @@ class MessageConsumer():
         except KeyError as e:
             self._consumer.reject_message(basic_deliver.delivery_tag)
             logger.error("Bad message properties - no tx_id",
-                         action="quarantined",
+                         action="rejected",
                          exception=str(e),
                          delivery_count=delivery_count)
             return None
