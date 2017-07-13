@@ -13,6 +13,5 @@ sdist:
 
 test: depinstall
 	pip3 install -r test_requirements.txt
-	pip3 install .[dev]
 	flake8 .
 	python -m unittest discover sdc
