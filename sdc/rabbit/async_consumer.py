@@ -7,7 +7,7 @@ from structlog import wrap_logger
 logger = wrap_logger(logging.getLogger('__name__'))
 
 
-class AsyncConsumer():
+class AsyncConsumer:
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
@@ -26,6 +26,7 @@ class AsyncConsumer():
                  exchange,
                  exchange_type,
                  rabbit_queue,
+                 quarantine_queue,
                  rabbit_urls):
         """Create a new instance of the AsyncConsumer class.
 
@@ -44,7 +45,7 @@ class AsyncConsumer():
         self._durable_queue = durable_queue
         self._queue = rabbit_queue
         self._rabbit_urls = rabbit_urls
-        self._rabbit_quarantine_queue = 'async_consumer_quarantine'
+        self._rabbit_quarantine_queue = quarantine_queue
 
         self._connection = None
         self._channel = None

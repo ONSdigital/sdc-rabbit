@@ -1,7 +1,6 @@
 class BadMessageError(Exception):
-    """A bad message is broken in some way that will never be accepted by
-    the endpoing and as such should be rejected (it will still be logged
-    and stored so no data is lost).
+    """Raise if a message is broken in some way that means it will never
+    succesfully process.
 
     """
     pass

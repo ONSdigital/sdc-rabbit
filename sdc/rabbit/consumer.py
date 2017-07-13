@@ -3,7 +3,6 @@ import logging
 from structlog import wrap_logger
 
 from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
-from sdc.rabbit.publisher import QueuePublisher
 
 logger = wrap_logger(logging.getLogger('__name__'))
 
@@ -34,7 +33,6 @@ class MessageConsumer():
         :rtype: int
 
         """
-        delivery_count = 0
         delivery_count = properties.headers['x-delivery-count']
         return delivery_count + 1
 
@@ -54,7 +52,7 @@ class MessageConsumer():
         logger.info("Retrieved tx_id from message properties: tx_id={}".format(tx))
         return tx
 
-    def __init__(self, consumer, process):
+    def __init__(self, consumer, quarantine_publisher, process):
         """Create a new instance of the MessageConsumer class
 
         : param consumer: Object of type sdc.rabbit.AsyncConsumer
@@ -69,12 +67,11 @@ class MessageConsumer():
         """
         self._consumer = consumer
         self._process = process
+        self._quarantine_publisher = quarantine_publisher
 
         if not callable(process):
-            msg = 'callback is not callable'
+            msg = 'process callback is not callable'
             raise AttributeError(msg.format(process))
-        self._quarantine_publisher = QueuePublisher(self._consumer._rabbit_urls,
-                                                    self._consumer._rabbit_quarantine_queue)
 
     def on_message(self, basic_deliver, properties, body):
         """Called on receipt of a message from a queue.
@@ -124,6 +121,7 @@ class MessageConsumer():
 
         except DecryptError as e:
             # Throw it into the quarantine queue to be dealt with
+            self._quarantine_publisher.publish_message(body)
             self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
             logger.error("Bad decrypt",
                          action="quarantined",

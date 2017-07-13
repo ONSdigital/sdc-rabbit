@@ -54,9 +54,7 @@ class QueuePublisher(object):
             except pika.exceptions.AMQPConnectionError as e:
                 logger.error("Unable to connect to queue",
                              exception=repr(e))
-                continue
-
-        return False
+                raise
 
     def _disconnect(self):
         """
@@ -85,7 +83,9 @@ class QueuePublisher(object):
 
         """
         logger.debug("Sending message")
-        if not self._connect():
+        try:
+            self._connect()
+        except pika.exceptions.AMQPConnectionError:
             return False
 
         try:
@@ -99,9 +99,10 @@ class QueuePublisher(object):
                                         body=message)
             logger.debug("Published message")
 
+        except pika.exceptions.ChannelClosed:
+            self._connect()
         except Exception as e:
             logger.error("Unable to publish message", exception=repr(e))
             return False
-        finally:
-            self._disconnect()
-            return True
+
+        return True
