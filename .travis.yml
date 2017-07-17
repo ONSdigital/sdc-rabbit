@@ -6,7 +6,7 @@ python:
 sudo: required
 services:
   - rabbitmq
-install: make depinstall
+install: make install
 script: make test
 after_success:
-  - make sdist
+  - make dist
