@@ -31,7 +31,7 @@ Assuming you are executing from inside an activated virtual environment:
 
 ###### Create a package for deployment:
 
-    $ make sdist
+    $ make dist
 
 ###### Build documentation pages:
 

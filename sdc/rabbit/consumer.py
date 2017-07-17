@@ -2,8 +2,8 @@ import logging
 
 from structlog import wrap_logger
 
-from sdc.rabbit.exceptions import BadMessageError, DecryptError, RetryableError
-from sdc.rabbit.exceptions import PublishMessageError
+from sdc.rabbit.exceptions import BadMessageError, RetryableError
+from sdc.rabbit.exceptions import PublishMessageError, QuarantinableError
 
 logger = wrap_logger(logging.getLogger('__name__'))
 
@@ -120,12 +120,12 @@ class MessageConsumer():
             self._consumer.acknowledge_message(basic_deliver.delivery_tag,
                                                tx_id=tx_id)
 
-        except DecryptError as e:
+        except QuarantinableError as e:
             # Throw it into the quarantine queue to be dealt with
             try:
                 self._quarantine_publisher.publish_message(body)
                 self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
-                logger.error("Bad decrypt",
+                logger.error("Quarantinable error occured",
                              action="quarantined",
                              exception=str(e),
                              tx_id=tx_id,

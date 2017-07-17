@@ -6,9 +6,9 @@ class BadMessageError(Exception):
     pass
 
 
-class DecryptError(Exception):
-    """Can't even decrypt the message. May be corrupt or keys may be out of
-    step.
+class QuarantinableError(Exception):
+    """An error occured, but the data may not be incorrect. Quarantine, and
+    process offline.
 
     """
     pass

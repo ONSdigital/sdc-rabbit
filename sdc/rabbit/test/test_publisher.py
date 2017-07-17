@@ -3,12 +3,9 @@ import logging
 import unittest
 
 from pika.exceptions import AMQPConnectionError
-from sdx.common.log_levels import set_level
 
 from sdc.rabbit import QueuePublisher
 from sdc.rabbit.test.test_data import test_data
-
-set_level('pika', 'CRITICAL')
 
 
 class TestPublisher(unittest.TestCase):

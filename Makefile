@@ -1,14 +1,16 @@
 
-.PHONY: depinstall clean sdist test
+.PHONY: depinstall clean dist test
+
+all: install test
 
 clean:
 	rm -rf sdc/rabbit/doc/html
 	rm -v dist/sdc-rabbit-python-*.tar.gz
 
-depinstall:
+install:
 	pip3 install -r requirements.txt
 
-sdist:
+dist:
 	python setup.py sdist
 
 test: depinstall
