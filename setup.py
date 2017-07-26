@@ -27,12 +27,12 @@ installRequirements = [
 ]
 
 setup(
-    name="sdc-rabbit-python",
+    name="sdc-rabbit",
     version=version,
     description="A shared library for SDC services that interact with RabbitMQ using Pika",
     author="J Gardiner",
     author_email="james@jgardiner.co.uk",
-    url="https://github.com/ONSdigital/sdxc-rabbit-python",
+    url="https://github.com/ONSdigital/sdc-rabbit",
     long_description=__doc__,
     classifiers=[
         "Operating System :: OS Independent",
@@ -58,5 +58,6 @@ setup(
         "console_scripts": [
         ],
     },
-    zip_safe=False
+    zip_safe=False,
+    namespace_packages=["sdc"],
 )
