@@ -11,3 +11,4 @@ include/
 coverage.xml
 .coverage
 .idea
+*.sublime*
