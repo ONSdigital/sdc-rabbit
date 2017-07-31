@@ -1,5 +1,4 @@
-from sdc.rabbit.async_consumer import AsyncConsumer  # noqa
-from sdc.rabbit.consumer import MessageConsumer
+from sdc.rabbit.consumers import AsyncConsumer, MessageConsumer, TornadoConsumer  # noqa
 from sdc.rabbit.publisher import QueuePublisher  # noqa
 
 all = [
