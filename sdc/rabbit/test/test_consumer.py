@@ -3,7 +3,7 @@ import logging
 import unittest
 from unittest import mock
 
-from sdc.rabbit import SDXConsumer, QueuePublisher
+from sdc.rabbit import MessageConsumer, QueuePublisher
 from sdc.rabbit.exceptions import BadMessageError, RetryableError
 from sdc.rabbit.exceptions import PublishMessageError, QuarantinableError
 
@@ -22,13 +22,13 @@ class TestSdxConsumer(unittest.TestCase):
         self.quarantine_publisher = QueuePublisher([self.amqp_url],
                                                    'test_quarantine')
 
-        self.consumer = SDXConsumer(True,
-                                    'test',
-                                    'topic',
-                                    'test',
-                                    [self.amqp_url],
-                                    self.quarantine_publisher,
-                                    lambda x: True)
+        self.consumer = MessageConsumer(True,
+                                        'test',
+                                        'topic',
+                                        'test',
+                                        [self.amqp_url],
+                                        self.quarantine_publisher,
+                                        lambda x: True)
 
         self.props = DotDict({'headers': {'tx_id': 'test',
                                           'x-delivery-count': 0}})
@@ -39,13 +39,13 @@ class TestSdxConsumer(unittest.TestCase):
 
     def test_callable(self):
         with self.assertRaises(AttributeError):
-            self.consumer = SDXConsumer(True,
-                                        'test',
-                                        'topic',
-                                        'test',
-                                        [self.amqp_url],
-                                        self.quarantine_publisher,
-                                        self.body)
+            self.consumer = MessageConsumer(True,
+                                            'test',
+                                            'topic',
+                                            'test',
+                                            [self.amqp_url],
+                                            self.quarantine_publisher,
+                                            self.body)
 
     def test_queue_attributes(self):
         self.assertEqual(self.consumer._exchange, 'test')

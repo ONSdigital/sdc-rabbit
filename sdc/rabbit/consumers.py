@@ -398,7 +398,7 @@ class AsyncConsumer:
 
 class TornadoConsumer(AsyncConsumer):
     def connect(self):
-        """This method connects to RabbitMQ using a TornadoConnection objEct,
+        """This method connects to RabbitMQ using a TornadoConnection object,
         returning the connection handle.
 
         When the connection is established, the on_connection_open method
@@ -429,7 +429,7 @@ class TornadoConsumer(AsyncConsumer):
                 continue
 
 
-class SDXConsumer(TornadoConsumer):
+class MessageConsumer(TornadoConsumer):
     """This is a queue consumer that handles messages from RabbitMQ message queues.
 
     On receipt of a message it takes a number of params from the message
@@ -481,7 +481,8 @@ class SDXConsumer(TornadoConsumer):
                  rabbit_queue,
                  rabbit_urls,
                  quarantine_publisher,
-                 process):
+                 process,
+                 check_tx_id=True):
         """Create a new instance of the SDXConsumer class
 
         : param durable_queue: Boolean specifying whether queue is durable
@@ -501,12 +502,12 @@ class SDXConsumer(TornadoConsumer):
 
         """
         self.process = process
-
         if not callable(process):
             msg = 'process callback is not callable'
             raise AttributeError(msg.format(process))
 
         self.quarantine_publisher = quarantine_publisher
+        self.check_tx_id = check_tx_id
 
         super().__init__(durable_queue,
                          exchange,
@@ -537,23 +538,27 @@ class SDXConsumer(TornadoConsumer):
             logger.error(msg, action="rejected", exception=str(e))
             return None
 
-        try:
-            tx_id = self.tx_id(properties)
+        if self.check_tx_id:
+            try:
+                tx_id = self.tx_id(properties)
 
-            logger.info('Received message',
-                        queue=self._queue,
-                        delivery_tag=basic_deliver.delivery_tag,
-                        delivery_count=delivery_count,
-                        app_id=properties.app_id,
-                        tx_id=tx_id)
+                logger.info('Received message',
+                            queue=self._queue,
+                            delivery_tag=basic_deliver.delivery_tag,
+                            delivery_count=delivery_count,
+                            app_id=properties.app_id,
+                            tx_id=tx_id)
 
-        except KeyError as e:
-            self.reject_message(basic_deliver.delivery_tag)
-            logger.error("Bad message properties - no tx_id",
-                         action="rejected",
-                         exception=str(e),
-                         delivery_count=delivery_count)
-            return None
+            except KeyError as e:
+                self.reject_message(basic_deliver.delivery_tag)
+                logger.error("Bad message properties - no tx_id",
+                             action="rejected",
+                             exception=str(e),
+                             delivery_count=delivery_count)
+                return None
+        else:
+            logger.debug("check_tx_id is False. Not checking tx_id for message.",
+                         delivery_tag=basic_deliver.delivery_tag)
 
         try:
             self.process(body.decode("utf-8"))
