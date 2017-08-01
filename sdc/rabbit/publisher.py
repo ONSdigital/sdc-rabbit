@@ -1,12 +1,14 @@
 import logging
 
-from structlog import wrap_logger
 import pika
 from pika.exceptions import NackError, UnroutableError
+from structlog import wrap_logger
 
 from sdc.rabbit.exceptions import PublishMessageError
 
-logger = wrap_logger(logging.getLogger('__name__'))
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger = wrap_logger(logger)
 
 
 class QueuePublisher(object):
@@ -43,7 +45,7 @@ class QueuePublisher(object):
         :rtype: bool
 
         """
-        logger.debug("Connecting to queue")
+        logger.info("Connecting to queue")
         for url in self._urls:
             try:
                 self._connection = pika.BlockingConnection(pika.URLParameters(url))

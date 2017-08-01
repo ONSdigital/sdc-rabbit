@@ -7,7 +7,8 @@ from structlog import wrap_logger
 from sdc.rabbit.exceptions import BadMessageError, RetryableError
 from sdc.rabbit.exceptions import PublishMessageError, QuarantinableError
 
-logger = wrap_logger(logging.getLogger('__name__'))
+logger = logging.getLogger(__name__)
+logger = wrap_logger(logger)
 
 
 class AsyncConsumer:
@@ -64,6 +65,7 @@ class AsyncConsumer:
         :rtype: pika.SelectConnection
 
         """
+
         count = 1
         no_of_servers = len(self._rabbit_urls)
 
@@ -296,8 +298,9 @@ class AsyncConsumer:
         """
         logger.info(
             'Received message',
-            delivery_tag=basic_deliver.delivery_tag, app_id=properties.app_id,
-            msg=body
+            delivery_tag=basic_deliver.delivery_tag,
+            app_id=properties.app_id,
+            msg=body,
         )
         self.acknowledge_message(basic_deliver.delivery_tag)
 
@@ -371,6 +374,7 @@ class AsyncConsumer:
         starting the IOLoop to block and allow the SelectConnection to operate.
 
         """
+        logger.debug('Running rabbit consumer')
         self._connection = self.connect()
         self._connection.ioloop.start()
 
@@ -394,7 +398,7 @@ class AsyncConsumer:
 
 class TornadoConsumer(AsyncConsumer):
     def connect(self):
-        """This method connects to RabbitMQ using a TornadoConnection objct,
+        """This method connects to RabbitMQ using a TornadoConnection objEct,
         returning the connection handle.
 
         When the connection is established, the on_connection_open method
@@ -425,7 +429,7 @@ class TornadoConsumer(AsyncConsumer):
                 continue
 
 
-class MessageConsumer():
+class SDXConsumer(TornadoConsumer):
     """This is a queue consumer that handles messages from RabbitMQ message queues.
 
     On receipt of a message it takes a number of params from the message
@@ -470,28 +474,47 @@ class MessageConsumer():
         logger.info("Retrieved tx_id from message properties: tx_id={}".format(tx))
         return tx
 
-    def __init__(self, consumer, quarantine_publisher, process):
-        """Create a new instance of the MessageConsumer class
+    def __init__(self,
+                 durable_queue,
+                 exchange,
+                 exchange_type,
+                 rabbit_queue,
+                 rabbit_urls,
+                 quarantine_publisher,
+                 process):
+        """Create a new instance of the SDXConsumer class
 
-        : param consumer: Object of type sdc.rabbit.AsyncConsumer
+        : param durable_queue: Boolean specifying whether queue is durable
+        : param exchange: RabbitMQ exchange name
+        : param exchange_type: RabbitMQ exchange type
+        : param rabbit_queue: RabbitMQ queue name
+        : param rabbit_urls: List of rabbit urls
+        : param quarantine_publisher: Object of type sdc.rabbit.QueuePublisher.
+            Will publish quarantined messages to the named queue.
         : param process: Function or method to use for processsing message. Will
             be passed the body of the message as a string decoded using UTF - 8.
             Should raise sdc.rabbit.DecryptError, sdc.rabbit.BadMessageError or
             sdc.rabbit.RetryableError on failure, depending on the failure mode.
 
-        :returns: Object of type Consumer
-        :rtype: Consumer
+        : returns: Object of type SDXConsumer
+        : rtype: SDXConsumer
 
         """
-        self._consumer = consumer
-        self._process = process
-        self._quarantine_publisher = quarantine_publisher
+        self.process = process
 
         if not callable(process):
             msg = 'process callback is not callable'
             raise AttributeError(msg.format(process))
 
-    def on_message(self, basic_deliver, properties, body):
+        self.quarantine_publisher = quarantine_publisher
+
+        super().__init__(durable_queue,
+                         exchange,
+                         exchange_type,
+                         rabbit_queue,
+                         rabbit_urls)
+
+    def on_message(self, unused_channel, basic_deliver, properties, body):
         """Called on receipt of a message from a queue.
 
         Processes the message using the self._process method or function and positively
@@ -499,17 +522,17 @@ class MessageConsumer():
         the message can either be rejected, quarantined or negatively acknowledged,
         depending on the failure mode.
 
-        :param basic_deliver: AMQP basic.deliver method
-        :param properties: Message properties
-        :param body: Message body
+        : param basic_deliver: AMQP basic.deliver method
+        : param properties: Message properties
+        : param body: Message body
 
-        :returns: None
+        : returns: None
 
         """
         try:
             delivery_count = self.delivery_count(properties)
         except KeyError as e:
-            self._consumer.reject_message(basic_deliver.delivery_tag)
+            self.reject_message(basic_deliver.delivery_tag)
             msg = 'Bad message properties - no delivery count'
             logger.error(msg, action="rejected", exception=str(e))
             return None
@@ -518,14 +541,14 @@ class MessageConsumer():
             tx_id = self.tx_id(properties)
 
             logger.info('Received message',
-                        queue=self._consumer._queue,
+                        queue=self._queue,
                         delivery_tag=basic_deliver.delivery_tag,
                         delivery_count=delivery_count,
                         app_id=properties.app_id,
                         tx_id=tx_id)
 
         except KeyError as e:
-            self._consumer.reject_message(basic_deliver.delivery_tag)
+            self.reject_message(basic_deliver.delivery_tag)
             logger.error("Bad message properties - no tx_id",
                          action="rejected",
                          exception=str(e),
@@ -533,15 +556,15 @@ class MessageConsumer():
             return None
 
         try:
-            self._process(body.decode("utf-8"))
-            self._consumer.acknowledge_message(basic_deliver.delivery_tag,
-                                               tx_id=tx_id)
+            self.process(body.decode("utf-8"))
+            self.acknowledge_message(basic_deliver.delivery_tag,
+                                     tx_id=tx_id)
 
         except QuarantinableError as e:
             # Throw it into the quarantine queue to be dealt with
             try:
-                self._quarantine_publisher.publish_message(body)
-                self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
+                self.quarantine_publisher.publish_message(body)
+                self.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
                 logger.error("Quarantinable error occured",
                              action="quarantined",
                              exception=str(e),
@@ -550,13 +573,13 @@ class MessageConsumer():
             except PublishMessageError as e:
                 logger.error("Unable to publish message to quarantine queue." +
                              " Rejecting message and requeing.")
-                self._consumer.reject_message(basic_deliver.delivery_tag,
-                                              requeue=True,
-                                              tx_id=tx_id)
+                self.reject_message(basic_deliver.delivery_tag,
+                                    requeue=True,
+                                    tx_id=tx_id)
 
         except BadMessageError as e:
             # If it's a bad message then we have to reject it
-            self._consumer.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
+            self.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
             logger.error("Bad message",
                          action="rejected",
                          exception=str(e),
@@ -564,7 +587,7 @@ class MessageConsumer():
                          delivery_count=delivery_count)
 
         except RetryableError as e:
-            self._consumer.nack_message(basic_deliver.delivery_tag, tx_id=tx_id)
+            self.nack_message(basic_deliver.delivery_tag, tx_id=tx_id)
             logger.error("Failed to process",
                          action="nack",
                          exception=str(e),
