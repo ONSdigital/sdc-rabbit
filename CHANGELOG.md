@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 1.0.0 2017-08-30
+- Stabilised API
+
 ### 0.3.4
 - Remove call to ioloop.stop in reconnect handler.
 
