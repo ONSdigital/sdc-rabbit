@@ -114,7 +114,7 @@ class QueuePublisher(object):
                                                  ),
                                                  body=message)
 
-            logger.info('Published message to queue', queue=self._queue)
+            logger.info('Published message to queue queue={}'.format(self._queue))
             return result
         except NackError:
             # raised when a message published in publisher-acknowledgments mode
