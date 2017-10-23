@@ -1,5 +1,5 @@
 ### Unreleased
-- Do not restart ioloop is stop method is called on consumer
+- Do not restart ioloop if stop method is called on consumer
 - Better exception handling of TypeErrors in consumer module when the `headers` attribute was not set in a message's properties.
 
 ### 1.0.2 2017-09-07
