@@ -391,7 +391,6 @@ class AsyncConsumer:
         logger.info('Stopping')
         self._closing = True
         self.stop_consuming()
-        self._connection.ioloop.start()
         logger.info('Stopped')
 
 
