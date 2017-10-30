@@ -80,7 +80,7 @@ class AsyncConsumer:
                                              self.on_connection_open,
                                              stop_ioloop_on_close=False)
             except pika.exceptions.AMQPConnectionError as e:
-                logger.error("Connection error", exception=e)
+                logger.exception("Connection error")
                 count += 1
                 logger.error("Connection sleep", no_of_seconds=count)
                 time.sleep(count)
@@ -419,7 +419,7 @@ class TornadoConsumer(AsyncConsumer):
                                                                           self.on_connection_open,
                                                                           stop_ioloop_on_close=False)
             except pika.exceptions.AMQPConnectionError as e:
-                logger.error("Connection error", exception=e)
+                logger.exception("Connection error")
                 count += 1
                 logger.error("Connection sleep", no_of_seconds=count)
                 time.sleep(count)
