@@ -549,10 +549,10 @@ class MessageConsumer(TornadoConsumer):
             self.acknowledge_message(basic_deliver.delivery_tag,
                                      tx_id=tx_id)
 
-        except QuarantinableError as e:
+        except (QuarantinableError, BadMessageError) as e:
             # Throw it into the quarantine queue to be dealt with
             try:
-                self.quarantine_publisher.publish_message(body)
+                self.quarantine_publisher.publish_message(body, headers={'tx_id': tx_id})
                 self.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
                 logger.error("Quarantinable error occured",
                              action="quarantined",
@@ -564,14 +564,6 @@ class MessageConsumer(TornadoConsumer):
                 self.reject_message(basic_deliver.delivery_tag,
                                     requeue=True,
                                     tx_id=tx_id)
-
-        except BadMessageError as e:
-            # If it's a bad message then we have to reject it
-            self.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
-            logger.error("Bad message",
-                         action="rejected",
-                         exception=str(e),
-                         tx_id=tx_id)
 
         except RetryableError as e:
             self.nack_message(basic_deliver.delivery_tag, tx_id=tx_id)

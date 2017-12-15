@@ -144,7 +144,7 @@ class TestSdxConsumer(unittest.TestCase):
                                                   self.props,
                                                   self.body.encode('UTF-8'))
         self.assertEqual(result, None)
-        self.assertIn("Bad message", cm[0][0].message)
+        self.assertIn("Quarantinable error occured", cm[0][0].message)
 
     def test_on_message_retryable_message_error(self):
         mock_method = 'sdc.rabbit.AsyncConsumer.nack_message'
