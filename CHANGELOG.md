@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 1.2.1 2017-12-15
+ - Copy message headers to the quarantine queue and quarantine rather than reject bad messages
+
 ### 1.2.0 2017-10-30
  - Log exceptions using `logging.Logger.exception` method in consumer module
 
