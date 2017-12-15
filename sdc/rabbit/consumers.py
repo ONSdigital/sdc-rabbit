@@ -552,7 +552,7 @@ class MessageConsumer(TornadoConsumer):
         except QuarantinableError as e:
             # Throw it into the quarantine queue to be dealt with
             try:
-                self.quarantine_publisher.publish_message(body)
+                self.quarantine_publisher.publish_message(body, headers={'tx_id': tx_id})
                 self.reject_message(basic_deliver.delivery_tag, tx_id=tx_id)
                 logger.error("Quarantinable error occured",
                              action="quarantined",
