@@ -1,5 +1,5 @@
 # Unreleased
- - Additional exception handling in _connect of consumer
+ - Add additional exception handling in _connect of consumer
 
 ### 1.3.0 2018-01-04
  - Additional exception handling in on_message of consumer
