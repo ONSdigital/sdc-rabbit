@@ -115,7 +115,7 @@ class QueuePublisher(object):
             logger.info('Published message to queue queue={}'.format(self._queue))
             return result
         except pika.exceptions.AMQPConnectionError:
-            logger.error("Message not published. RetryableError raised")
+            logger.error("AMQPConnectionError occurred. Message not published.")
             raise PublishMessageError
         except NackError:
             # raised when a message published in publisher-acknowledgments mode
