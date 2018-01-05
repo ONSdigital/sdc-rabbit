@@ -1,3 +1,6 @@
+# Unreleased
+ - Add additional exception handling in _connect of consumer
+
 ### 1.3.0 2018-01-04
  - Additional exception handling in on_message of consumer
  - Update Pika to 0.11.2
