@@ -1,4 +1,6 @@
 # Unreleased
+
+### 1.3.1 2018-01-05
  - Add additional exception handling in _connect of consumer
 
 ### 1.3.0 2018-01-04
