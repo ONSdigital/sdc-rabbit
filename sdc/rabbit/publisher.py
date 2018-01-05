@@ -101,11 +101,6 @@ class QueuePublisher(object):
         logger.debug("Publishing message")
         try:
             self._connect()
-        except pika.exceptions.AMQPConnectionError:
-            logger.error("Message not published. RetryableError raised")
-            raise PublishMessageError
-
-        try:
             result = self._channel.basic_publish(exchange='',
                                                  routing_key=self._queue,
                                                  mandatory=mandatory,
@@ -119,6 +114,9 @@ class QueuePublisher(object):
 
             logger.info('Published message to queue queue={}'.format(self._queue))
             return result
+        except pika.exceptions.AMQPConnectionError:
+            logger.error("Message not published. RetryableError raised")
+            raise PublishMessageError
         except NackError:
             # raised when a message published in publisher-acknowledgments mode
             # is returned via `Basic.Return` followed by `Basic.Ack`.
