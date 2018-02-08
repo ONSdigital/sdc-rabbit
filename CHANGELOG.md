@@ -1,5 +1,8 @@
 # Unreleased
 
+### 1.4.0 2018-02-08
+ - Add additional publisher for handling fanouts to an exchange
+
 ### 1.3.1 2018-01-05
  - Add additional exception handling in _connect of consumer
 
