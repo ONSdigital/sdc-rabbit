@@ -127,7 +127,7 @@ class TestSdxConsumer(unittest.TestCase):
                                                       self.body.encode('UTF-8'))
         self.assertEqual(result, None)
 
-        expected_msg = "Unable to publish message to quarantine queue. Rejecting message and requeing."
+        expected_msg = "Unable to publish message to quarantine queue. Rejecting message and requeuing."
         self.assertIn(expected_msg, cm[0][1].message)
 
     def test_on_message_bad_message_error(self):

@@ -1,4 +1,5 @@
 # Unreleased
+ - Relax version requirements of packages
 
 ### 1.5.1 2018-02-09
  - Hotfix to amend DurableExchangePublisher inheritance

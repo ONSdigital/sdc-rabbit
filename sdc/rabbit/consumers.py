@@ -79,7 +79,7 @@ class AsyncConsumer:
                 return pika.SelectConnection(pika.URLParameters(self._url),
                                              self.on_connection_open,
                                              stop_ioloop_on_close=False)
-            except pika.exceptions.AMQPConnectionError as e:
+            except pika.exceptions.AMQPConnectionError:
                 logger.exception("Connection error")
                 count += 1
                 logger.error("Connection sleep", no_of_seconds=count)
@@ -418,7 +418,7 @@ class TornadoConsumer(AsyncConsumer):
                 return pika.adapters.tornado_connection.TornadoConnection(pika.URLParameters(self._url),
                                                                           self.on_connection_open,
                                                                           stop_ioloop_on_close=False)
-            except pika.exceptions.AMQPConnectionError as e:
+            except pika.exceptions.AMQPConnectionError:
                 logger.exception("Connection error")
                 count += 1
                 logger.error("Connection sleep", no_of_seconds=count)
@@ -558,9 +558,8 @@ class MessageConsumer(TornadoConsumer):
                              action="quarantined",
                              exception=str(e),
                              tx_id=tx_id)
-            except PublishMessageError as e:
-                logger.error("Unable to publish message to quarantine queue." +
-                             " Rejecting message and requeing.")
+            except PublishMessageError:
+                logger.error("Unable to publish message to quarantine queue. Rejecting message and requeuing.")
                 self.reject_message(basic_deliver.delivery_tag,
                                     requeue=True,
                                     tx_id=tx_id)
