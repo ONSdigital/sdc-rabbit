@@ -1,4 +1,6 @@
 # Unreleased
+
+### 1.5.2 2019-02-22
  - Relax version requirements of packages
 
 ### 1.5.1 2018-02-09
