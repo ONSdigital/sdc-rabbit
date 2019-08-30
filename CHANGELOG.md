@@ -1,4 +1,6 @@
 # Unreleased
+
+### 1.7.0 2019-08-30
  - Fix reconnection when using a TornadoConsumer or anything that inherits from it
  - Fix backup url functionality
  - Fix backoff timing for repeated connection retries
